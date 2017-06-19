@@ -1,9 +1,9 @@
 ARCH := $(shell getconf LONG_BIT)
 
-CPP_FLAGS_32 := -m32
-CPP_FLAGS_64 := -m64
+CFLAGS_32 := -m32
+CFLAGS_64 := -m64
 
-CPP_FLAGS := $(CPP_FLAGS_$(ARCH)) -Wall -fPIC -pipe -O3
+CFLAGS := $(CFLAGS_$(ARCH)) -Wall -fPIC -pipe -O3
 
 CC=gcc
 TARGET := similarities.so
@@ -12,31 +12,31 @@ UNITTEST_SRC := test/similarities_test.c
 UNITTEST_DST := test/similarities_test
 
 ifeq ($(OS),Windows_NT)
-    detected_OS := Windows
+	detected_OS := Windows
 else
-    detected_OS := $(shell uname -s)
+	detected_OS := $(shell uname -s)
 endif
 ifeq ($(detected_OS),Darwin)  # Mac OS X
-    MYSQL_CFLAGS := -I/opt/local/include/mysql56/mysql/
-	CPP_FLAGS += -v -bundle $(MYSQL_CFLAGS)
+	MYSQL_CFLAGS ?= -I/opt/local/include/mysql56/mysql/
+	CFLAGS += -v -bundle $(MYSQL_CFLAGS)
 endif
 ifeq ($(detected_OS),Windows)
-    UNITTEST_SRC := test\similarities_test.c
-    UNITTEST_DST := test\similarities_test.exe
-    MYSQL_CFLAGS := -IC:\mysql\include\
-	CPP_FLAGS += -v -shared $(MYSQL_CFLAGS)
+	UNITTEST_SRC := test\similarities_test.c
+	UNITTEST_DST := test\similarities_test.exe
+ 	MYSQL_CFLAGS ?= -IC:\mysql\include\
+	CFLAGS += -v -shared $(MYSQL_CFLAGS)
 	TARGET := similarities.dll
-    UNITTEST_DST := similarities_test.exe
+	UNITTEST_DST := similarities_test.exe
 endif
 ifeq ($(detected_OS),Linux)
-    MYSQL_CFLAGS := -I/usr/include/mysql/
-	CPP_FLAGS += -v -shared $(MYSQL_CFLAGS)
+	MYSQL_CFLAGS ?= -I/usr/include/mysql/
+	CFLAGS += -v -shared $(MYSQL_CFLAGS)
 endif
 
 all: similarities similarities_test
 
 similarities: $(SOURCES)
-	$(CC) $(CPP_FLAGS) -o $(TARGET) $(SOURCES)
+	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)
 
 similarities_test: $(UNITTEST_SRC)
 	$(CC) $(MYSQL_CFLAGS) -o $(UNITTEST_DST) $(UNITTEST_SRC)
