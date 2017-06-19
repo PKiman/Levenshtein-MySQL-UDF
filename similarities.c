@@ -18,8 +18,10 @@
  *
  * or run
  *
- * make
- * make test
+ * make && make test
+ *
+ * Compile with alternative include path
+ * MYSQL_CFLAGS="-I/opt/local/include/mysql57/mysql/" && make && make test
  *
  * Put the shared library as described in: http://dev.mysql.com/doc/refman/5.0/en/udf-compiling.html
  *
@@ -30,8 +32,10 @@
  * CREATE FUNCTION levenshtein_ratio RETURNS REAL SONAME 'similarities.so';
  * CREATE FUNCTION levenshtein_k_ratio RETURNS REAL SONAME 'similarities.so';
  * CREATE FUNCTION levenshtein_substring_k RETURNS INT SONAME 'similarities.so';
+ * CREATE FUNCTION levenshtein_substring_ci_k RETURNS INT SONAME 'similarities.so';
  * CREATE FUNCTION damerau RETURNS INT SONAME 'similarities.so';
  * CREATE FUNCTION damerau_substring RETURNS INT SONAME 'similarities.so';
+ * CREATE FUNCTION damerau_substring_ci RETURNS INT SONAME 'similarities.so';
  *
  * -------------------------------------------------------------------------
  *
@@ -59,27 +63,7 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 extern char *_strip_w(const char *str, const int str_len);
-
-
-//int main(int argc, char **argv) {
-//
-//    UDF_INIT *init = (UDF_INIT *) malloc(sizeof(UDF_INIT));
-//    UDF_ARGS *args = (UDF_ARGS *) malloc(sizeof(UDF_ARGS));
-//    args->arg_type = (enum Item_result *) malloc(sizeof(enum Item_result)*3);
-//    args->lengths = (long unsigned int *) malloc(sizeof(long unsigned int)*2);
-//    char *message = (char *) malloc(sizeof(char)*MYSQL_ERRMSG_SIZE);
-//    char *error = (char *) malloc(sizeof(char));
-//    char *is_null = (char *) malloc(sizeof(char));
-//
-//    char *result = all_tests();
-//    if (result != 0) {
-//        printf("%s\n", result);
-//    } else {
-//        printf("ALL TESTS PASSED\n");
-//    }
-//    printf("Tests run: %d\n", tests_run);
-//    return result != 0;
-//}
+extern char *_tolowercase(char *str);
 
 /**
  * @param s string
@@ -105,6 +89,18 @@ inline char *_strip_w(const char *str, const int str_len){
     }
     striped_str[x] = '\0';
     return striped_str;
+}
+
+/**
+ * @param s string
+ * @result lowercase string
+ */
+inline char *_tolowercase(char *str){
+    int i = 0;
+    for(i = 0; str[i]; i++){
+        str[i] = tolower(str[i]);
+    }
+    return str;
 }
 
 /**
@@ -183,6 +179,20 @@ void    levenshtein_substring_k_deinit(UDF_INIT *initid);
 longlong  levenshtein_substring_k(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error);
 
 /**
+ * Levenshtein substring distance with threshold k (maximum allowed distance) case insensitive
+ *
+ * @param s string 1 to compare, length n
+ * @param t string 2 to compare, length m
+ * @param k maximum threshold
+ * @result levenshtein substring matching distance between s and t or >k (not specified) if the distance is greater than k
+ * If the left string is longer than the right string then both strings are swapped
+ *
+ */
+my_bool levenshtein_substring_ci_k_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+void    levenshtein_substring_ci_k_deinit(UDF_INIT *initid);
+longlong  levenshtein_substring_ci_k(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error);
+
+/**
  * Damerau-Levenshtein
  *
  * @param s string 1 to compare, length n
@@ -206,6 +216,18 @@ extern longlong _damerau_core(const char *str1,int s_len1, const char * str2, in
 my_bool damerau_substring_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
 void    damerau_substring_deinit(UDF_INIT *initid);
 longlong  damerau_substring(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error);
+
+/**
+ * Damerau-Levenshtein case insensitive
+ *
+ * @param s string 1 to compare, length n
+ * @param t string 2 to compare, length m
+ * @result damerau levenshtein substring matching distance
+ */
+my_bool damerau_substring_ci_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+void    damerau_substring_ci_deinit(UDF_INIT *initid);
+longlong  damerau_substring_ci(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error);
+
 //-------------------------------------------------------------------------
 
 
@@ -628,6 +650,75 @@ longlong levenshtein_substring_k(UDF_INIT *initid, UDF_ARGS *args, char *is_null
 
 //-------------------------------------------------------------------------
 
+my_bool levenshtein_substring_ci_k_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
+  // sanitizing input parameters
+  if ((args->arg_count != 3) ||
+      (args->arg_type[0] != STRING_RESULT || args->arg_type[1] != STRING_RESULT || args->arg_type[2] != INT_RESULT)) {
+    strcpy(message, "Function requires 3 arguments, (string, string, int)");
+    return 1;
+  }
+
+  initid->ptr = NULL;
+  initid->max_length = LEVENSHTEIN_MAX;
+  initid->maybe_null = 0; //doesn't return null
+
+  return 0;
+}
+
+/**
+ *  deallocate memory, clean and close
+ */
+void levenshtein_substring_ci_k_deinit(UDF_INIT *initid) {
+    if (initid->ptr != NULL)
+        free(initid->ptr);
+}
+
+longlong levenshtein_substring_ci_k(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error) {
+  const char *s = args->args[0];
+  const char *t = args->args[1];
+
+  const int k = *((int*) args->args[2]);
+
+  int n = (s == NULL) ? 0 : args->lengths[0]; /*contains pattern*/
+  int m = (t == NULL) ? 0 : args->lengths[1]; /*contains row*/
+
+  const char *s_stripped = _tolowercase(_strip_w(s, n));
+  const char *t_stripped = _tolowercase(_strip_w(t, m));
+
+  n = strlen(s_stripped);
+  m = strlen(t_stripped);
+
+  //order the strings so that the first always has the minimum length l
+  if (n > m) {
+    int aux = n;
+    n = m;
+    m = aux;
+    const char *auxs = s_stripped;
+    s_stripped = t_stripped;
+    t_stripped = auxs;
+  }
+
+  longlong lowest_dist = LLONG_MAX;
+  longlong dist = 0;
+
+  unsigned int index = 0;
+
+  while (index <= (m - n)) {
+    dist = _levenshtein_k_core(s_stripped, n, t_stripped, n, k);
+    if (dist < lowest_dist)
+        lowest_dist = dist;
+
+    (void)*t_stripped++;
+    index++;
+    if (lowest_dist == 1)
+        return lowest_dist;
+  }
+
+  return lowest_dist;
+}
+
+//-------------------------------------------------------------------------
+
 //! check parameters and allocate memory for MySql
 my_bool damerau_init(UDF_INIT *init, UDF_ARGS *args, char *message) {
 
@@ -758,6 +849,79 @@ longlong damerau_substring(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 
   const char *s_stripped = _strip_w(s, n);
   const char *t_stripped = _strip_w(t, m);
+
+  n = strlen(s_stripped);
+  m = strlen(t_stripped);
+
+  //order the strings so that the first always has the minimum length l
+  if (n > m) {
+    int aux = n;
+    n = m;
+    m = aux;
+    const char *auxs = s_stripped;
+    s_stripped = t_stripped;
+    t_stripped = auxs;
+  }
+
+  longlong lowest_dist = LLONG_MAX;
+  longlong dist = 0;
+
+  unsigned int index = 0;
+
+  while (index <= (m - n)) {
+    dist = _damerau_core(
+                s_stripped, n,
+                t_stripped, n,
+                /* swap */              1,
+                /* substitution */	    1,
+                /* insertion */         1,
+                /* deletion */          1
+    );
+    if (dist < lowest_dist)
+        lowest_dist = dist;
+
+    (void)*t_stripped++;
+    index++;
+    if (lowest_dist == 1)
+        return lowest_dist;
+  }
+
+  return lowest_dist;
+}
+
+//-------------------------------------------------------------------------
+
+my_bool damerau_substring_ci_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
+  // sanitizing input parameters
+  if ((args->arg_count != 2) ||
+      (args->arg_type[0] != STRING_RESULT || args->arg_type[1] != STRING_RESULT)) {
+    strcpy(message, "Function requires 2 arguments, (string, string)");
+    return 1;
+  }
+
+  initid->max_length = LEVENSHTEIN_MAX;
+  initid->maybe_null = 0; //doesn't return null
+
+  return 0;
+}
+
+/**
+ *  deallocate memory, clean and close
+ */
+void damerau_substring_ci_deinit(UDF_INIT *initid) {
+    if (initid->ptr != NULL)
+        free(initid->ptr);
+}
+
+longlong damerau_substring_ci(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char *error) {
+  const char *s = args->args[0];
+  const char *t = args->args[1];
+
+  int n = (s == NULL) ? 0 : args->lengths[0]; /*contains pattern*/
+  int m = (t == NULL) ? 0 : args->lengths[1]; /*contains row*/
+
+  const char *s_stripped = _tolowercase(_strip_w(s, n));
+  const char *t_stripped = _tolowercase(_strip_w(t, m));
 
   n = strlen(s_stripped);
   m = strlen(t_stripped);

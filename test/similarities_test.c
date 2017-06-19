@@ -311,6 +311,65 @@ static char * levenshtein_substring_k_test2() {
     return 0;
 }
 
+static char * levenshtein_substring_ci_k_test() {
+    if(lib_handle != NULL) {
+        printf("Testing => %s\n", __FUNCTION__);
+
+        long long limit_arg = 255;
+        char *testString1 = "levenhstein";
+        char *testString2 = "This is a long string Levenshtein";
+
+        my_bool (*levenshtein_substring_ci_k_init)() = dlsym(lib_handle, "levenshtein_substring_ci_k_init");
+        longlong (*levenshtein_substring_ci_k)() = dlsym(lib_handle, "levenshtein_substring_ci_k");
+        void(*levenshtein_substring_ci_k_deinit)() = dlsym(lib_handle, "levenshtein_substring_ci_k_deinit");
+
+        UDF_INIT *init = (UDF_INIT *) malloc(sizeof(UDF_INIT));
+        UDF_ARGS *args = (UDF_ARGS *) malloc(sizeof(UDF_ARGS));
+        args->arg_type = (enum Item_result *) malloc(sizeof(enum Item_result)*3);
+        args->lengths = (long unsigned int *) malloc(sizeof(long unsigned int)*2);
+        char *message = (char *) malloc(sizeof(char)*MYSQL_ERRMSG_SIZE);
+        char *error = (char *) malloc(sizeof(char));
+        char *is_null = (char *) malloc(sizeof(char));
+
+        long long *limit_arg_ptr = &limit_arg;
+
+        args->arg_type[0] = STRING_RESULT;
+        args->arg_type[1] = STRING_RESULT;
+        args->arg_type[2] = INT_RESULT;
+        args->lengths[0] = strlen(testString1);
+        args->lengths[1] = strlen(testString2);
+        args->arg_count = 3;
+        is_null[0] = '\0';
+        error[0] = '\0';
+        args->args = (char **) malloc(sizeof(char *)*3);
+        args->args[0] = (char *) malloc(sizeof(char)*(args->lengths[0]));
+        args->args[0] = testString1;
+        args->args[1] = (char *) malloc(sizeof(char)*(args->lengths[1]));
+        args->args[1] = testString2;
+        args->args[2] = (char *) limit_arg_ptr;
+
+        my_bool ret = levenshtein_substring_ci_k_init(init, args, message);
+        mu_assert("Error, levenshtein_substring_ci_k_test => levenshtein_substring_k_init - expected 0", ret == 0);
+
+        longlong result = levenshtein_substring_ci_k(init, args, is_null, error);
+        mu_assert("Error, levenshtein_substring_ci_k_test => levenshtein_substring_k - expected 2", result == 2);
+
+
+        levenshtein_substring_ci_k_deinit(init);
+
+        free(args->args);
+        free(is_null);
+        free(error);
+        free(message);
+        free(args->arg_type);
+        free(args->lengths);
+        free(args);
+        free(init);
+    }
+
+    return 0;
+}
+
 static char * levenshtein_k_ratio_test() {
     if(lib_handle != NULL) {
         printf("Testing => %s\n", __FUNCTION__);
@@ -578,6 +637,60 @@ static char * damerau_substring_test2() {
     return 0;
 }
 
+static char * damerau_substring_ci_test() {
+    if(lib_handle != NULL) {
+        printf("Testing => %s\n", __FUNCTION__);
+
+        char *testString1 = "levenhstein";
+        char *testString2 = "This is a long string Levenshtein";
+
+
+        my_bool (*damerau_substring_ci_init)() = dlsym(lib_handle, "damerau_substring_ci_init");
+        longlong (*damerau_substring_ci)() = dlsym(lib_handle, "damerau_substring_ci");
+        void(*damerau_substring_ci_deinit)() = dlsym(lib_handle, "damerau_substring_ci_deinit");
+
+        UDF_INIT *init = (UDF_INIT *) malloc(sizeof(UDF_INIT));
+        UDF_ARGS *args = (UDF_ARGS *) malloc(sizeof(UDF_ARGS));
+        args->arg_type = (enum Item_result *) malloc(sizeof(enum Item_result)*2);
+        args->lengths = (long unsigned int *) malloc(sizeof(long unsigned int)*2);
+        char *message = (char *) malloc(sizeof(char)*MYSQL_ERRMSG_SIZE);
+        char *error = (char *) malloc(sizeof(char));
+        char *is_null = (char *) malloc(sizeof(char));
+
+        args->arg_type[0] = STRING_RESULT;
+        args->arg_type[1] = STRING_RESULT;
+        args->lengths[0] = strlen(testString1);
+        args->lengths[1] = strlen(testString2);
+        args->arg_count = 2;
+        is_null[0] = '\0';
+        error[0] = '\0';
+        args->args = (char **) malloc(sizeof(char *)*2);
+        args->args[0] = (char *) malloc(sizeof(char)*(args->lengths[0]));
+        args->args[0] = testString1;
+        args->args[1] = (char *) malloc(sizeof(char)*(args->lengths[1]));
+        args->args[1] = testString2;
+
+        my_bool ret = damerau_substring_ci_init(init, args, message);
+        mu_assert("Error, damerau_substring_ci_test => damerau_substring_ci_init - expected 0", ret == 0);
+
+        longlong result = damerau_substring_ci(init, args, is_null, error);
+        mu_assert("Error, damerau_substring_ci_test => damerau_substring_ci - expected 2", result == 1);
+
+        damerau_substring_ci_deinit(init);
+
+        free(args->args);
+        free(is_null);
+        free(error);
+        free(message);
+        free(args->arg_type);
+        free(args->lengths);
+        free(args);
+        free(init);
+    }
+
+    return 0;
+}
+
 static char * all_tests() {
     mu_run_test(strip_w_test_1);
     mu_run_test(strip_w_test_2);
@@ -587,11 +700,13 @@ static char * all_tests() {
     mu_run_test(levenshtein_k_test);
     mu_run_test(levenshtein_substring_k_test1);
     mu_run_test(levenshtein_substring_k_test2);
+    mu_run_test(levenshtein_substring_ci_k_test);
     mu_run_test(levenshtein_ratio_test);
     mu_run_test(levenshtein_k_ratio_test);
     mu_run_test(damerau_test);
     mu_run_test(damerau_substring_test1);
     mu_run_test(damerau_substring_test2);
+    mu_run_test(damerau_substring_ci_test);
 
     return 0;
 }

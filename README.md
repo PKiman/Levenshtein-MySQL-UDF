@@ -6,7 +6,7 @@
 * k-bounded Levenshtein ratio
 * Fuzzy search with levensthein
 * Fuzzy search with damerau-levensthein
-* native unit testing
+* native C unit testing
 
 **How to compile?**
 
