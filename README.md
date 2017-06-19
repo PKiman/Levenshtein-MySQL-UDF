@@ -4,8 +4,10 @@
 * k-bounded Levenshtein distance algorithm (linear time, constant space),
 * Levenshtein ratio (syntactic sugar for: `levenshtein_ratio(s, t) = 1 - levenshtein(s, t) / max(s.length, t.length)`)
 * k-bounded Levenshtein ratio
-* Fuzzy search with levensthein
-* Fuzzy search with damerau-levensthein
+* Fuzzy search with levensthein case sensitive
+* Fuzzy search with levensthein case insensitive
+* Fuzzy search with damerau-levensthein case sensitive
+* Fuzzy search with damerau-levensthein case insensitive
 * native C unit testing
 
 **How to compile?**
@@ -39,8 +41,10 @@ CREATE FUNCTION levenshtein_k RETURNS INT SONAME 'similarities.so';
 CREATE FUNCTION levenshtein_ratio RETURNS REAL SONAME 'similarities.so';
 CREATE FUNCTION levenshtein_k_ratio RETURNS REAL SONAME 'similarities.so';
 CREATE FUNCTION levenshtein_substring_k RETURNS INT SONAME 'similarities.so';
+CREATE FUNCTION levenshtein_substring_ci_k RETURNS INT SONAME 'similarities.so';
 CREATE FUNCTION damerau RETURNS INT SONAME 'similarities.so';
 CREATE FUNCTION damerau_substring RETURNS INT SONAME 'similarities.so';
+CREATE FUNCTION damerau_substring_ci RETURNS INT SONAME 'similarities.so';
 ```
 
 **How to uninstall?**
@@ -51,8 +55,10 @@ DROP FUNCTION levenshtein_k';
 DROP FUNCTION levenshtein_ratio;
 DROP FUNCTION levenshtein_k_ratio;
 DROP FUNCTION levenshtein_substring_k;
+DROP FUNCTION levenshtein_substring_ci_k;
 DROP FUNCTION damerau;
-DROP FUNCTION damerau_substring; 
+DROP FUNCTION damerau_substring;
+DROP FUNCTION damerau_substring_ci;
 ```
 
 **How to use?**
@@ -90,9 +96,31 @@ mysql> SELECT LEVENSHTEIN_SUBSTRING_K("Levenhstein", "This is a long string Leve
 1 row in set (0.00 sec)
 ```
 
+*Levenshtein Fuzzy-Search Distance Case Insensitive*
+```
+mysql> SELECT LEVENSHTEIN_SUBSTRING_CI_K("levenhstein", "This is a long string Levenshtein", 255) AS distance;
++----------+
+| distance |
++----------+
+|        2 |
++----------+
+1 row in set (0.00 sec)
+```
+
 *Levenshtein-Damerau Fuzzy-Search Distance*
 ```
 mysql> SELECT DAMERAU_SUBSTRING("Levenhstein", "This is a long string Levenshtein") AS distance;
++----------+
+| distance |
++----------+
+|        1 |
++----------+
+1 row in set (0.00 sec)
+```
+
+*Levenshtein-Damerau Fuzzy-Search Distance Case Insensitive*
+```
+mysql> SELECT DAMERAU_SUBSTRING_CI("levenhstein", "This is a long string Levenshtein") AS distance;
 +----------+
 | distance |
 +----------+
