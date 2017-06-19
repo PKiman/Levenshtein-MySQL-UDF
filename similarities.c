@@ -7,6 +7,7 @@
  *                      Added MakeFile
  *
  * Credits to:
+*  @author juanmirocks
  * @author Juan Miguel Cejuela, @jmcejuela
  *
  *
