@@ -13,6 +13,7 @@
 `make && make test`
 
 Compile with another location of mysql include folder use:
+
 `MYSQL_CFLAGS="-I/opt/local/include/mysql57/mysql/" && make && make test`
 
 **How to install?**
