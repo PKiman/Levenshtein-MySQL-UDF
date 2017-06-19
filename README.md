@@ -55,6 +55,7 @@ DROP FUNCTION damerau_substring;
 
 **How to use?**
 
+Levenshtein Distance
 ```
 mysql> SELECT LEVENSHTEIN("Levenhstein", "Levenshtein") AS distance;
 +----------+
@@ -65,6 +66,7 @@ mysql> SELECT LEVENSHTEIN("Levenhstein", "Levenshtein") AS distance;
 1 row in set (0.00 sec)
 ```
 
+Levenshtein-Damerau Distance
 ```
 mysql> SELECT DAMERAU("Levenhstein", "Levenshtein") AS distance;
 +----------+
@@ -74,3 +76,14 @@ mysql> SELECT DAMERAU("Levenhstein", "Levenshtein") AS distance;
 +----------+
 1 row in set (0.00 sec)
 ```
+Levenshtein Fuzzy-Search Distance
+```
+mysql> SELECT DAMERAU("Levenhstein", "Levenshtein") AS distance;
++----------+
+| distance |
++----------+
+|        1 |
++----------+
+1 row in set (0.00 sec)
+```
+

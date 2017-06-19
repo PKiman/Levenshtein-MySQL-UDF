@@ -612,7 +612,7 @@ longlong levenshtein_substring_k(UDF_INIT *initid, UDF_ARGS *args, char *is_null
 
   unsigned int index = 0;
 
-  while ((t_stripped[index] != '\0') && (index <= (m - n))) {
+  while (index <= (m - n)) {
     dist = _levenshtein_k_core(s_stripped, n, t_stripped, n, k);
     if (dist < lowest_dist)
         lowest_dist = dist;
@@ -777,7 +777,7 @@ longlong damerau_substring(UDF_INIT *initid, UDF_ARGS *args, char *is_null, char
 
   unsigned int index = 0;
 
-  while ((t_stripped[index] != '\0') && (index <= (m - n))) {
+  while (index <= (m - n)) {
     dist = _damerau_core(
                 s_stripped, n,
                 t_stripped, n,
