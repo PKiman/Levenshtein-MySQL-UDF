@@ -22,7 +22,7 @@ ifeq ($(detected_OS),Darwin)  # Mac OS X
 endif
 ifeq ($(detected_OS),Windows)
     UNITTEST_SRC := test\similarities_test.c
-    UNITTEST_DST := test\similarities_test
+    UNITTEST_DST := test\similarities_test.exe
     MYSQL_CFLAGS := -IC:\mysql\include\
 	CPP_FLAGS += -v -shared $(MYSQL_CFLAGS)
 	TARGET := similarities.dll
@@ -35,21 +35,14 @@ endif
 
 all: similarities similarities_test
 
-#debug: CPP_FLAGS += -DDEBUG -g
-#debug: $(SOURCES)
-#        $(CC) $(CPP_FLAGS) -o bin/$(TARGET) $(SOURCES)
-
 similarities: $(SOURCES)
 	$(CC) $(CPP_FLAGS) -o $(TARGET) $(SOURCES)
 
 similarities_test: $(UNITTEST_SRC)
 	$(CC) $(MYSQL_CFLAGS) -o $(UNITTEST_DST) $(UNITTEST_SRC)
 
-#test:
-#    ./similarities_test
-
-#clean:
-#	-rm $(TARGET)
+clean:
+	-rm -v $(TARGET) $(UNITTEST_DST)
 
 test: run
 
