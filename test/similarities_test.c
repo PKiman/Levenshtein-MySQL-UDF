@@ -25,7 +25,7 @@ static char * strip_w_test_1() {
         char *testString1 = "          This is           \r               a dirty test  string   with many  whitespaces   \n  and newlines    \n\r    ";
         unsigned long len_testString1 = strlen(testString1);
         char *result1 = strip_w(testString1, len_testString1);
-        //printf("%lu %lu %s\n", len_testString1, strlen(result1), result1);
+        //printf("%lu %lu [%s]\n", len_testString1, strlen(result1), result1);
         mu_assert("Error, strip_w_test_1 => testString1 length - expected 63", strlen(result1) == 63);
     }
 
