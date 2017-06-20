@@ -39,7 +39,7 @@ similarities: $(SOURCES)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES)
 
 similarities_test: $(UNITTEST_SRC)
-	$(CC) $(MYSQL_CFLAGS) -o $(UNITTEST_DST) $(UNITTEST_SRC)
+	$(CC) $(MYSQL_CFLAGS) -ldl -o $(UNITTEST_DST) $(UNITTEST_SRC)
 
 clean:
 	-rm -v $(TARGET) $(UNITTEST_DST)
