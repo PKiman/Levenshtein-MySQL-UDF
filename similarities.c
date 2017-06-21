@@ -71,8 +71,7 @@ extern char *_tolowercase(char *str);
  */
 inline char *_strip_w(const char *str, const int str_len){
     char *striped_str = (char *)malloc((str_len+1));
-    enum condition_type {START, INGORE, WRITE};
-    enum condition_type condition = START;
+    enum {START, INGORE, WRITE} condition = START;
     int i,x;
     for (i=x=0; i < str_len; i++){
         if (condition == START && isspace(str[i]))
