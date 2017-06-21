@@ -830,6 +830,7 @@ my_bool damerau_substring_init(UDF_INIT *initid, UDF_ARGS *args, char *message) 
     return 1;
   }
 
+  initid->ptr = NULL;
   initid->max_length = LEVENSHTEIN_MAX;
   initid->maybe_null = 0; //doesn't return null
 
