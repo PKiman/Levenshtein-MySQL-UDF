@@ -8,9 +8,9 @@
 #include "../similarities.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
-static const char *lib_filename = "similarities.dll";
+static const char *lib_filename = ".\similarities.dll";
 #else
-static const char *lib_filename = "similarities.so";
+static const char *lib_filename = "./similarities.so";
 #endif
 
 void* lib_handle = NULL;
@@ -26,7 +26,7 @@ static char * strip_w_test_1() {
         unsigned long len_testString1 = strlen(testString1);
         char *result1 = strip_w(testString1, len_testString1);
         //printf("%lu %lu [%s]\n", len_testString1, strlen(result1), result1);
-        mu_assert("Error, strip_w_test_1 => testString1 length - expected 63", strlen(result1) == 63);
+        mu_assert("Error, strip_w_test_1 => testString1 length - expected 62", strlen(result1) == 62);
     }
 
     return 0;
@@ -40,7 +40,7 @@ static char * strip_w_test_2() {
         char *testString2 = "     \n       \r         \n \r    ";
         unsigned long len_testString2 = strlen(testString2);
         char *result2 = strip_w(testString2, len_testString2);
-        //printf("%lu %lu %s\n", len_testString2, strlen(result2), result2);
+        //printf("%lu %lu [%s]\n", len_testString2, strlen(result2), result2);
         mu_assert("Error, strip_w_test_2 => testString2 length - expected 0", strlen(result2) == 0);
     }
 
@@ -55,7 +55,7 @@ static char * strip_w_test_3() {
         char *testString3 = "\n       \r         \n \r    ";
         unsigned long len_testString3 = strlen(testString3);
         char *result3 = strip_w(testString3, len_testString3);
-        //printf("%lu %lu %s\n", len_testString3, strlen(result3), result3);
+        //printf("%lu %lu [%s]\n", len_testString3, strlen(result3), result3);
         mu_assert("Error, strip_w_test_3 => testString3 length - expected 0", strlen(result3) == 0);
     }
 
@@ -714,9 +714,9 @@ static char * all_tests() {
 int main(int argc, char **argv) {
     char *result = 0;
     //lib_handle = dlopen(lib_filename, RTLD_LAZY);
-    lib_handle = dlopen(lib_filename, RTLD_NOW|RTLD_GLOBAL);
+    lib_handle = dlopen(lib_filename, RTLD_NOW | RTLD_GLOBAL);
 
-    if(lib_handle == NULL) {
+    if (lib_handle == NULL) {
         printf("Failed loading lib %s\n", lib_filename);
     } else {
         //printf("Loaded lib successfully\n");
@@ -725,8 +725,7 @@ int main(int argc, char **argv) {
         result = all_tests();
         if (result != 0) {
             printf("%s\n", result);
-        }
-        else {
+        } else {
             printf("\nALL TESTS PASSED\n");
         }
         printf("Tests run: %d\n", tests_run);

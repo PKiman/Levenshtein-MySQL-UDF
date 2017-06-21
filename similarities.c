@@ -71,22 +71,26 @@ extern char *_tolowercase(char *str);
  */
 inline char *_strip_w(const char *str, const int str_len){
     char *striped_str = (char *)malloc((str_len+1));
-    int i,x, space = 0;
-    for (i=x=0; i < str_len;++i){
-        if (isspace(str[i]) && isspace(str[i+1]))
-            space = 2;
-        else if (isspace(str[i]) && str[i+1]=='\0')
-            space = 2;
-        else if (isspace(str[i]) && !isspace(str[i+1]))
-            space = 1;
+    enum condition_type {START, INGORE, WRITE};
+    enum condition_type condition = START;
+    int i,x;
+    for (i=x=0; i < str_len; i++){
+        if (condition == START && isspace(str[i]))
+            continue;
+        else if ((isspace(str[i]) && isspace(str[i+1]))
+                || (isspace(str[i]) && str[i+1]=='\0')) {
+            condition = INGORE;
+            continue;
+        }
+        else if ((!isspace(str[i]) && isspace(str[i+1]))
+                || (!isspace(str[i]) && !isspace(str[i+1]))
+                || (isspace(str[i]) && !isspace(str[i+1])))
+            condition = WRITE;
 
-        if ((str[i] == '\n' && isspace(str[i+1])) || (str[i] == '\r' && isspace(str[i+1])))
-            space = 2;
-        else if ((str[i] == '\n') || (str[i] == '\r'))
-            striped_str[x++] = ' ';
-        else if (space <= 1)
+        if (condition == WRITE)
             striped_str[x++] = str[i];
     }
+
     striped_str[x] = '\0';
     return striped_str;
 }
